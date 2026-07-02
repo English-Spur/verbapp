@@ -39,7 +39,7 @@
             </p>
             <div class="mt-5 flex flex-wrap justify-center gap-3">
                 <div class="inline-flex items-center gap-2 bg-slate-50 px-4 py-1.5 rounded-full border border-slate-200 text-[11px] font-semibold text-slate-600">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" id="syncStatusColor"></span> <span id="syncStatusText">Loading Cloud Database...</span>
+                    <span class="w-2 h-2 rounded-full bg-emerald-500" id="syncStatusColor"></span> <span id="syncStatusText">Loading Cloud Database...</span>
                 </div>
                 <button id="toggleViewBtn" class="bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-4 py-1.5 rounded-full transition shadow-sm cursor-pointer">
                     📊 View All Database & Print PDF
@@ -141,7 +141,6 @@
     </div>
 
     <script>
-        // 🌟 GOOGLE SHEET DIRECT LINK FOR ALL ONLINE WEBSITES
         const GOOGLE_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRraC24aWTsVBedW9SOtbLeqkcCbKCztWnQgFsP88ric7Mb7I6N2yFZJn2tpmwaO8QJaJ6Axwje1VpZ/pub?output=csv";
 
         let cloudDatabase = {};
@@ -161,12 +160,13 @@
 
         async function loadCloudData() {
             try {
-                // Using cors proxy string module wrapper to bypass strict GitHub online domain security walls
                 const proxyUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(GOOGLE_SHEET_CSV_URL);
                 const response = await fetch(proxyUrl);
-                if (!response.ok) throw new Error('Cloud payload extraction failure');
+                if (!response.ok) throw new Error('Cloud loading error');
                 const dataText = await response.text();
+                
                 parseCsvData(dataText);
+                
                 syncStatusText.textContent = `Cloud Synced (${sortedKeys.length} Verbs Live)`;
                 syncStatusColor.className = "w-2 h-2 rounded-full bg-emerald-500";
             } catch (err) {
@@ -176,25 +176,60 @@
             }
         }
 
+        // Advanced Resilient CSV Parser to handle all kinds of commas, quotes, and line breaks smoothly
         function parseCsvData(text) {
-            const lines = text.split("\n");
             cloudDatabase = {};
-            
-            for (let i = 1; i < lines.length; i++) {
-                if (!lines[i].trim()) continue;
-                const row = lines[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
-                if (!row || row.length < 15) continue;
+            const lines = [];
+            let row = [];
+            let inQuotes = false;
+            let currentField = '';
 
-                const clean = (str) => str.replace(/^"|"$/g, '').trim();
-                const v1Word = clean(row[0]);
+            // Tokenize CSV text carefully considering quoted strings
+            for (let i = 0; i < text.length; i++) {
+                let char = text[i];
+                let nextChar = text[i+1];
+
+                if (char === '"') {
+                    if (inQuotes && nextChar === '"') {
+                        currentField += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    row.push(currentField.trim());
+                    currentField = '';
+                } else if ((char === '\r' || char === '\n') && !inQuotes) {
+                    if (char === '\r' && nextChar === '\n') { i++; }
+                    row.push(currentField.trim());
+                    if (row.length > 0 && row.some(field => field !== '')) {
+                        lines.push(row);
+                    }
+                    row = [];
+                    currentField = '';
+                } else {
+                    currentField += char;
+                }
+            }
+            if (currentField || row.length > 0) {
+                row.push(currentField.trim());
+                lines.push(row);
+            }
+
+            // Map data dynamically into master engine matrix slots
+            for (let i = 1; i < lines.length; i++) {
+                const columns = lines[i];
+                if (!columns || columns.length < 15 || !columns[0]) continue;
+
+                const v1Word = columns[0].replace(/^"|"$/g, '').trim();
                 const key = v1Word.toLowerCase();
 
                 cloudDatabase[key] = {
-                    v1: { word: v1Word, prn: clean(row[1]), mean: clean(row[2]) },
-                    v2: { word: clean(row[3]), prn: clean(row[4]), mean: clean(row[5]) },
-                    v3: { word: clean(row[6]), prn: clean(row[7]), mean: clean(row[8]) },
-                    v4: { word: clean(row[9]), prn: clean(row[10]), mean: clean(row[11]) },
-                    v5: { word: clean(row[12]), prn: clean(row[13]), mean: clean(row[14]) }
+                    v1: { word: v1Word, prn: columns[1], mean: columns[2] },
+                    v2: { word: columns[3], prn: columns[4], mean: columns[5] },
+                    v3: { word: columns[6], prn: columns[7], mean: columns[8] },
+                    v4: { word: columns[9], prn: columns[10], mean: columns[11] },
+                    v5: { word: columns[12], prn: columns[13], mean: columns[14] }
                 };
             }
             sortedKeys = Object.keys(cloudDatabase).sort();
