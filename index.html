@@ -14,11 +14,9 @@
             .no-print { display: none !important; }
             .print-area { display: block !important; width: 100% !important; margin: 0 !important; padding: 0 !important; border: none !important; shadow: none !important; }
             @page { margin: 15mm 10mm 15mm 10mm; }
-            table { width: 100% !important; border-collapse: separate !important; border-spacing: 0 !important; border: 1px solid #94a3b8 !important; page-break-inside: auto; }
+            table { width: 100% !important; border-collapse: collapse !important; border: 1px solid #94a3b8 !important; page-break-inside: auto; }
             tr { page-break-inside: avoid !important; page-break-after: auto !important; }
-            th, td { border-right: 1px solid #94a3b8 !important; border-bottom: 1px solid #94a3b8 !important; padding: 8px 6px !important; font-size: 12px !important; line-height: 1.4 !important; }
-            th:last-child, td:last-child { border-right: none !important; }
-            tfoot tr th { border-bottom: none !important; }
+            th, td { border: 1px solid #94a3b8 !important; padding: 8px 6px !important; font-size: 12px !important; line-height: 1.4 !important; page-break-inside: avoid !important; }
             thead { display: table-header-group !important; }
             tfoot { display: table-footer-group !important; }
         }
@@ -39,7 +37,7 @@
             </p>
             <div class="mt-5 flex flex-wrap justify-center gap-3">
                 <div class="inline-flex items-center gap-2 bg-slate-50 px-4 py-1.5 rounded-full border border-slate-200 text-[11px] font-semibold text-slate-600">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500" id="syncStatusColor"></span> <span id="syncStatusText">Loading Cloud Database...</span>
+                    <span class="w-2 h-2 rounded-full bg-emerald-500" id="syncStatusColor"></span> <span id="syncStatusText">Reading Local Storage...</span>
                 </div>
                 <button id="toggleViewBtn" class="bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-4 py-1.5 rounded-full transition shadow-sm cursor-pointer">
                     📊 View All Database & Print PDF
@@ -47,7 +45,7 @@
             </div>
         </div>
 
-        <div class="mb-8">
+        <div class="mb-6">
             <label for="verbInput" class="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">Search Base Verb (V1):</label>
             <div class="flex gap-3">
                 <input type="text" id="verbInput" placeholder="e.g., go, take, speak, write..." 
@@ -55,6 +53,17 @@
                 <button id="searchBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-4 rounded-2xl transition active:scale-95 text-sm tracking-wider uppercase cursor-pointer shadow-md shadow-blue-200">Find</button>
             </div>
             <p id="errorMsg" class="text-red-500 text-xs mt-3 font-semibold hidden">⚠️ দুঃখিত! এই verb টি আমাদের তালিকায় খুঁজে পাওয়া যায়নি।</p>
+        </div>
+
+        <div class="w-full my-6 bg-gradient-to-r from-blue-600 to-indigo-700 p-5 rounded-2xl shadow-md border border-blue-500 text-white flex flex-col sm:flex-row justify-between items-center gap-4 transition-all hover:shadow-lg">
+            <div class="text-center sm:text-left">
+                <span class="bg-amber-400 text-slate-950 font-black px-2 py-0.5 rounded text-[9px] uppercase tracking-widest">Sponsored Ad</span>
+                <h3 class="text-lg font-bold tracking-wide mt-1.5 leading-snug">💥 স্পোকেন ইংলিশের সেরা ডিজিটাল মেটেরিয়াল!</h3>
+                <p class="text-xs text-blue-100 font-medium mt-0.5">English Spur-এর অফিশিয়াল প্রিমিয়াম কোর্স বুক আজই অর্ডার করুন।</p>
+            </div>
+            <a href="https://wa.me/919875340842" target="_blank" class="bg-white hover:bg-slate-100 text-blue-700 font-extrabold px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider shadow-md transition active:scale-95 whitespace-nowrap">
+                📞 বুক করুন
+            </a>
         </div>
 
         <div id="resultContainer" class="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg">
@@ -81,10 +90,15 @@
     </div>
 
     <div id="pdfSection" class="hidden w-full max-w-5xl mx-auto bg-white border border-slate-200 rounded-3xl shadow-xl p-6 md:p-10 print-area">
-        <div class="flex justify-between items-center border-b border-slate-200 pb-4 mb-6 no-print">
-            <h3 class="text-lg font-bold text-slate-800">Complete Master Verb Matrix</h3>
-            <button id="printNowBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-xl transition text-sm tracking-wide cursor-pointer shadow-md">
-                🖨️ Download / Print as PDF
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-200 pb-4 mb-6 gap-4 no-print">
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+                <label for="letterFilter" class="text-xs font-bold uppercase tracking-wider text-slate-600 whitespace-nowrap">Filter Letter:</label>
+                <select id="letterFilter" class="bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                    <option value="ALL">All Letters (সব একসাথে)</option>
+                </select>
+            </div>
+            <button id="printNowBtn" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-xl transition text-sm tracking-wide cursor-pointer shadow-md text-center">
+                🖨️ Download / Print Checked PDF
             </button>
         </div>
 
@@ -128,7 +142,7 @@
                 <tfoot>
                     <tr class="bg-slate-50">
                         <th colspan="6" class="p-2 text-center text-[10px] font-medium text-slate-500 tracking-wider" style="border-right: none !important;">
-                            © 2026 English Spur Online English Training Academy | 📞 Contact us: +91 9875340842 | Cloud Live Mode Active
+                            © 2026 English Spur Online English Training Academy | 📞 Contact us: +91 9875340842 | Offline Storage Mode Active
                         </th>
                     </tr>
                 </tfoot>
@@ -141,8 +155,6 @@
     </div>
 
     <script>
-        const GOOGLE_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRraC24aWTsVBedW9SOtbLeqkcCbKCztWnQgFsP88ric7Mb7I6N2yFZJn2tpmwaO8QJaJ6Axwje1VpZ/pub?output=csv";
-
         let cloudDatabase = {};
         let sortedKeys = [];
 
@@ -157,66 +169,45 @@
         const printNowBtn = document.getElementById('printNowBtn');
         const masterPdfTableBody = document.getElementById('masterPdfTableBody');
         const quickIndexGrid = document.getElementById('quickIndexGrid');
+        const letterFilter = document.getElementById('letterFilter');
 
-        async function loadCloudData() {
+        function loadLocalData() {
             try {
-                const response = await fetch(GOOGLE_SHEET_CSV_URL);
-                if (!response.ok) throw new Error('Cloud loading error');
-                const dataText = await response.text();
-                
-                parseCsvData(dataText);
-                
-                syncStatusText.textContent = `Cloud Synced (${sortedKeys.length} Verbs Live)`;
+                const localData = localStorage.getItem('englishSpurVerbs');
+                if (!localData) {
+                    syncStatusText.textContent = "Storage Empty / No Data Found";
+                    syncStatusColor.className = "w-2 h-2 rounded-full bg-orange-500";
+                    return;
+                }
+                cloudDatabase = JSON.parse(localData);
+                sortedKeys = Object.keys(cloudDatabase).sort();
+                syncStatusText.textContent = `Local Synced (${sortedKeys.length} Verbs Live)`;
                 syncStatusColor.className = "w-2 h-2 rounded-full bg-emerald-500";
+                
+                populateFilterDropdown();
             } catch (err) {
-                syncStatusText.textContent = "Offline Mode / Connection Error";
+                syncStatusText.textContent = "Local Read Error";
                 syncStatusColor.className = "w-2 h-2 rounded-full bg-orange-500";
                 console.error(err);
             }
         }
 
-        function parseCsvData(text) {
-            cloudDatabase = {};
-            const lines = text.split(/\r?\n/);
-
-            for (let i = 1; i < lines.length; i++) {
-                const line = lines[i].trim();
-                if (!line) continue;
-
-                // Flexible quote/comma line standardizer to process rows accurately
-                let rows = [];
-                let currentCell = '';
-                let inQuotes = false;
-
-                for (let j = 0; j < line.length; j++) {
-                    let char = line[j];
-                    if (char === '"') {
-                        inQuotes = !inQuotes;
-                    } else if (char === ',' && !inQuotes) {
-                        rows.push(currentCell.trim().replace(/^"|"$/g, ''));
-                        currentCell = '';
-                    } else {
-                        currentCell += char;
-                    }
-                }
-                rows.push(currentCell.trim().replace(/^"|"$/g, ''));
-
-                if (rows.length >= 12 && rows[0] !== "" && !rows[0].toLowerCase().includes("v1 word")) {
-                    const v1Word = rows[0];
-                    const key = v1Word.toLowerCase();
-                    cloudDatabase[key] = {
-                        v1: { word: v1Word, prn: rows[1] || '—', mean: rows[2] || '—' },
-                        v2: { word: rows[3] || '—', prn: rows[4] || '—', mean: rows[5] || '—' },
-                        v3: { word: rows[6] || '—', prn: rows[7] || '—', mean: rows[8] || '—' },
-                        v4: { word: rows[9] || '—', prn: rows[10] || '—', mean: rows[11] || '—' },
-                        v5: { word: rows[12] || '—', prn: rows[13] || '—', mean: rows[14] || '—' }
-                    };
-                }
-            }
-            sortedKeys = Object.keys(cloudDatabase).sort();
+        function populateFilterDropdown() {
+            let uniqueLetters = new Set();
+            sortedKeys.forEach(key => {
+                if(key.length > 0) uniqueLetters.add(key.charAt(0).toUpperCase());
+            });
+            
+            letterFilter.innerHTML = '<option value="ALL">All Letters (সব একসাথে)</option>';
+            Array.from(uniqueLetters).sort().forEach(letter => {
+                const opt = document.createElement('option');
+                opt.value = letter;
+                opt.textContent = `Only Letter "${letter}"`;
+                letterFilter.appendChild(opt);
+            });
         }
 
-        window.addEventListener('DOMContentLoaded', loadCloudData);
+        window.addEventListener('DOMContentLoaded', loadLocalData);
 
         function executeSearch() {
             const query = verbInput.value.trim().toLowerCase();
@@ -240,16 +231,20 @@
         searchBtn.addEventListener('click', executeSearch);
         verbInput.addEventListener('keypress', function(e) { if (e.key === 'Enter') executeSearch(); });
 
-        toggleViewBtn.addEventListener('click', () => {
-            if (sortedKeys.length === 0) return alert('গুগল শিট থেকে ডেটা লোড হচ্ছে, দয়া করে একটু অপেক্ষা করো বন্ধু!');
+        function renderMasterTable(filterValue = "ALL") {
             masterPdfTableBody.innerHTML = '';
             quickIndexGrid.innerHTML = '';
             let indexRanges = {};
+            let currentGlobalIndex = 0;
 
-            sortedKeys.forEach((key, index) => {
+            sortedKeys.forEach((key) => {
                 const item = cloudDatabase[key];
                 const currentLetter = key.charAt(0).toUpperCase();
-                const serialNumber = index + 1;
+
+                if (filterValue !== "ALL" && currentLetter !== filterValue) return;
+
+                currentGlobalIndex++;
+                const serialNumber = currentGlobalIndex;
 
                 if (!indexRanges[currentLetter]) indexRanges[currentLetter] = { start: serialNumber, end: serialNumber };
                 else indexRanges[currentLetter].end = serialNumber;
@@ -274,9 +269,21 @@
                 block.innerHTML = `<span class="block font-black text-blue-600 text-sm mb-0.5">[ ${letter} ]</span><span class="text-[10px] text-slate-500 font-bold">SL: ${range.start} - ${range.end}</span>`;
                 quickIndexGrid.appendChild(block);
             });
+            
+            if(currentGlobalIndex === 0) {
+                masterPdfTableBody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-slate-400 font-bold text-sm">এই অক্ষরের কোনো ডেটাবেস পাওয়া যায়নি বন্ধু!</td></tr>';
+            }
+        }
 
+        toggleViewBtn.addEventListener('click', () => {
+            if (sortedKeys.length === 0) return alert('লোকাল মেমোরিতে কোনো ডেটা নেই বন্ধু!');
+            renderMasterTable(letterFilter.value);
             pdfSection.classList.remove('hidden');
             window.scrollTo({ top: pdfSection.offsetTop, behavior: 'smooth' });
+        });
+
+        letterFilter.addEventListener('change', (e) => {
+            renderMasterTable(e.target.value);
         });
 
         printNowBtn.addEventListener('click', () => { window.print(); });
