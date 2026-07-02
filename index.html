@@ -160,8 +160,8 @@
 
         async function loadCloudData() {
             try {
-                const proxyUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(GOOGLE_SHEET_CSV_URL);
-                const response = await fetch(proxyUrl);
+                // Direct call to Google Sheets since it runs on an active live server link (GitHub Pages) with native CORS header rules enabled
+                const response = await fetch(GOOGLE_SHEET_CSV_URL);
                 if (!response.ok) throw new Error('Cloud loading error');
                 const dataText = await response.text();
                 
@@ -176,61 +176,38 @@
             }
         }
 
-        // Advanced Resilient CSV Parser to handle all kinds of commas, quotes, and line breaks smoothly
         function parseCsvData(text) {
             cloudDatabase = {};
-            const lines = [];
-            let row = [];
+            const rows = [];
+            let currentCell = '';
             let inQuotes = false;
-            let currentField = '';
 
-            // Tokenize CSV text carefully considering quoted strings
+            // Highly robust stream tokenizer to clean raw comma blocks out of spreadsheet lines safely
             for (let i = 0; i < text.length; i++) {
                 let char = text[i];
-                let nextChar = text[i+1];
-
                 if (char === '"') {
-                    if (inQuotes && nextChar === '"') {
-                        currentField += '"';
-                        i++;
-                    } else {
-                        inQuotes = !inQuotes;
-                    }
+                    inQuotes = !inQuotes;
                 } else if (char === ',' && !inQuotes) {
-                    row.push(currentField.trim());
-                    currentField = '';
-                } else if ((char === '\r' || char === '\n') && !inQuotes) {
-                    if (char === '\r' && nextChar === '\n') { i++; }
-                    row.push(currentField.trim());
-                    if (row.length > 0 && row.some(field => field !== '')) {
-                        lines.push(row);
+                    rows.push(currentCell.trim());
+                    currentCell = '';
+                } else if ((char === '\n' || char === '\r') && !inQuotes) {
+                    rows.push(currentCell.trim());
+                    currentCell = '';
+                    if (rows.length >= 15 && rows[0] !== "" && !rows[0].includes("V1 Word")) {
+                        const v1Word = rows[0].replace(/^"|"$/g, '').trim();
+                        const key = v1Word.toLowerCase();
+                        cloudDatabase[key] = {
+                            v1: { word: v1Word, prn: rows[1].replace(/^"|"$/g, ''), mean: rows[2].replace(/^"|"$/g, '') },
+                            v2: { word: rows[3].replace(/^"|"$/g, ''), prn: rows[4].replace(/^"|"$/g, ''), mean: rows[5].replace(/^"|"$/g, '') },
+                            v3: { word: rows[6].replace(/^"|"$/g, ''), prn: rows[7].replace(/^"|"$/g, ''), mean: rows[8].replace(/^"|"$/g, '') },
+                            v4: { word: rows[9].replace(/^"|"$/g, ''), prn: rows[10].replace(/^"|"$/g, ''), mean: rows[11].replace(/^"|"$/g, '') },
+                            v5: { word: rows[12].replace(/^"|"$/g, ''), prn: rows[13].replace(/^"|"$/g, ''), mean: rows[14].replace(/^"|"$/g, '') }
+                        };
                     }
-                    row = [];
-                    currentField = '';
+                    rows.length = 0;
                 } else {
-                    currentField += char;
+                    currentCell += char;
                 }
-            }
-            if (currentField || row.length > 0) {
-                row.push(currentField.trim());
-                lines.push(row);
-            }
-
-            // Map data dynamically into master engine matrix slots
-            for (let i = 1; i < lines.length; i++) {
-                const columns = lines[i];
-                if (!columns || columns.length < 15 || !columns[0]) continue;
-
-                const v1Word = columns[0].replace(/^"|"$/g, '').trim();
-                const key = v1Word.toLowerCase();
-
-                cloudDatabase[key] = {
-                    v1: { word: v1Word, prn: columns[1], mean: columns[2] },
-                    v2: { word: columns[3], prn: columns[4], mean: columns[5] },
-                    v3: { word: columns[6], prn: columns[7], mean: columns[8] },
-                    v4: { word: columns[9], prn: columns[10], mean: columns[11] },
-                    v5: { word: columns[12], prn: columns[13], mean: columns[14] }
-                };
             }
             sortedKeys = Object.keys(cloudDatabase).sort();
         }
