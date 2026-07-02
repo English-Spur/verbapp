@@ -141,7 +141,7 @@
     </div>
 
     <script>
-        // 🌟 FIXED LINK: Re-compiled on a single continuous line string token module node
+        // 🌟 GOOGLE SHEET DIRECT LINK FOR ALL ONLINE WEBSITES
         const GOOGLE_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRraC24aWTsVBedW9SOtbLeqkcCbKCztWnQgFsP88ric7Mb7I6N2yFZJn2tpmwaO8QJaJ6Axwje1VpZ/pub?output=csv";
 
         let cloudDatabase = {};
@@ -161,8 +161,10 @@
 
         async function loadCloudData() {
             try {
-                const response = await fetch(GOOGLE_SHEET_CSV_URL);
-                if (!response.ok) throw new Error('Cloud stream breakdown');
+                // Using cors proxy string module wrapper to bypass strict GitHub online domain security walls
+                const proxyUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(GOOGLE_SHEET_CSV_URL);
+                const response = await fetch(proxyUrl);
+                if (!response.ok) throw new Error('Cloud payload extraction failure');
                 const dataText = await response.text();
                 parseCsvData(dataText);
                 syncStatusText.textContent = `Cloud Synced (${sortedKeys.length} Verbs Live)`;
