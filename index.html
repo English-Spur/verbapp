@@ -160,7 +160,6 @@
 
         async function loadCloudData() {
             try {
-                // Direct call to Google Sheets since it runs on an active live server link (GitHub Pages) with native CORS header rules enabled
                 const response = await fetch(GOOGLE_SHEET_CSV_URL);
                 if (!response.ok) throw new Error('Cloud loading error');
                 const dataText = await response.text();
@@ -178,35 +177,40 @@
 
         function parseCsvData(text) {
             cloudDatabase = {};
-            const rows = [];
-            let currentCell = '';
-            let inQuotes = false;
+            const lines = text.split(/\r?\n/);
 
-            // Highly robust stream tokenizer to clean raw comma blocks out of spreadsheet lines safely
-            for (let i = 0; i < text.length; i++) {
-                let char = text[i];
-                if (char === '"') {
-                    inQuotes = !inQuotes;
-                } else if (char === ',' && !inQuotes) {
-                    rows.push(currentCell.trim());
-                    currentCell = '';
-                } else if ((char === '\n' || char === '\r') && !inQuotes) {
-                    rows.push(currentCell.trim());
-                    currentCell = '';
-                    if (rows.length >= 15 && rows[0] !== "" && !rows[0].includes("V1 Word")) {
-                        const v1Word = rows[0].replace(/^"|"$/g, '').trim();
-                        const key = v1Word.toLowerCase();
-                        cloudDatabase[key] = {
-                            v1: { word: v1Word, prn: rows[1].replace(/^"|"$/g, ''), mean: rows[2].replace(/^"|"$/g, '') },
-                            v2: { word: rows[3].replace(/^"|"$/g, ''), prn: rows[4].replace(/^"|"$/g, ''), mean: rows[5].replace(/^"|"$/g, '') },
-                            v3: { word: rows[6].replace(/^"|"$/g, ''), prn: rows[7].replace(/^"|"$/g, ''), mean: rows[8].replace(/^"|"$/g, '') },
-                            v4: { word: rows[9].replace(/^"|"$/g, ''), prn: rows[10].replace(/^"|"$/g, ''), mean: rows[11].replace(/^"|"$/g, '') },
-                            v5: { word: rows[12].replace(/^"|"$/g, ''), prn: rows[13].replace(/^"|"$/g, ''), mean: rows[14].replace(/^"|"$/g, '') }
-                        };
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+
+                // Flexible quote/comma line standardizer to process rows accurately
+                let rows = [];
+                let currentCell = '';
+                let inQuotes = false;
+
+                for (let j = 0; j < line.length; j++) {
+                    let char = line[j];
+                    if (char === '"') {
+                        inQuotes = !inQuotes;
+                    } else if (char === ',' && !inQuotes) {
+                        rows.push(currentCell.trim().replace(/^"|"$/g, ''));
+                        currentCell = '';
+                    } else {
+                        currentCell += char;
                     }
-                    rows.length = 0;
-                } else {
-                    currentCell += char;
+                }
+                rows.push(currentCell.trim().replace(/^"|"$/g, ''));
+
+                if (rows.length >= 12 && rows[0] !== "" && !rows[0].toLowerCase().includes("v1 word")) {
+                    const v1Word = rows[0];
+                    const key = v1Word.toLowerCase();
+                    cloudDatabase[key] = {
+                        v1: { word: v1Word, prn: rows[1] || '—', mean: rows[2] || '—' },
+                        v2: { word: rows[3] || '—', prn: rows[4] || '—', mean: rows[5] || '—' },
+                        v3: { word: rows[6] || '—', prn: rows[7] || '—', mean: rows[8] || '—' },
+                        v4: { word: rows[9] || '—', prn: rows[10] || '—', mean: rows[11] || '—' },
+                        v5: { word: rows[12] || '—', prn: rows[13] || '—', mean: rows[14] || '—' }
+                    };
                 }
             }
             sortedKeys = Object.keys(cloudDatabase).sort();
